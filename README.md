@@ -4,6 +4,8 @@
 Your tiny local filament vault in your browser.<br>
 Track your filament storage locally, no cloud, no external servers. Only your web browser.
 
+INFO: The filament brands are not associated with the project. This is my own little project to sort and track filament for 3d printing!
+
 <b>Customize for your needs</b><p></p>
 Add or Remove Filament Brands:<br>
 ```const BRANDS = ["Bambu Lab","Prusament","Filament Unger",...];```<p></p>
