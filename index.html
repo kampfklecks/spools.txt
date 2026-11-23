@@ -8,7 +8,7 @@ body{background:var(--bg);color:var(--txt);max-width:var(--mw);margin:0 auto 14p
 .row{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px}
 .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;text-align:center}
 .stat{background:var(--stat);padding:7px;border-radius:12px;transition:.15s}
-.stat b{display:block;font-size:15px;color:#3b82f6}.stat span{font-size:11px;color:var(--sub)}
+.stat b{display:block;font-size:13px;color:#3b82f6}.stat span{font-size:11px;color:var(--sub)}
 .click{cursor:pointer}.click:hover{filter:brightness(.95)}.act{background:#d3e3fd !important;color:#041e49;outline:2px solid #0b57d0}
 #bEm.act{background:#ffedd5 !important;color:#9a3412;outline-color:#c2410c}#bSm.act{background:#f3e8ff !important;color:#6b21a8;outline-color:#7e22ce}
 input,select{width:100%;padding:6px 8px;border:1px solid var(--inp);border-radius:8px;margin-bottom:6px;background:var(--card);color:var(--txt)}
@@ -78,7 +78,8 @@ const MAX_Q = 10, DEF_Q = 1, SLIDER = {min:.05, max:5, step:.05, def:1};
 const WIDTHS = {s:'920px', m:'1200px', l:'1450px'};
 const TAGS = [
   {id:'special', name:'SPECIAL', bg:'#fef3c7', fg:'#b45309'},
-  {id:'eol', name:'EOL', bg:'#fee2e2', fg:'#b91c1c'}
+  {id:'eol', name:'EOL', bg:'#fee2e2', fg:'#b91c1c'},
+  {id:'outdated', name:'OUTDATED', bg:'#fee2e2', fg:'#b91c1c'}
 ];
 // ==============================
 const QTYS=Array.from({length:MAX_Q+1},(_,i)=>i),STORE='filament_inv_v1';let rolls=[],undoStack=[],sCol='',sAsc=1,cId=0,eId=0,flt='all',dark=0,mw='m';
@@ -88,20 +89,23 @@ Object.assign(wt,{min:SLIDER.min,max:SLIDER.max,step:SLIDER.step,value:SLIDER.de
 const setDark=v=>{dark=v?1:0;darkChk.checked=!!dark;document.body.classList.toggle('dark',!!dark)};
 const setW=k=>{mw=WIDTHS[k]?k:'m';document.documentElement.style.setProperty('--mw',WIDTHS[mw]);['s','m','l'].forEach(x=>document.getElementById('w'+x.toUpperCase()).classList.toggle('on',x===mw))};
 const setSavedTxt=ts=>{const t=ts?`Browser saved: ${ts}`:'Browser storage: Not saved yet';lastSv.textContent=t;optSv.textContent=t};
-const saveLoc=()=>{const saved=new Date().toLocaleString([],{dateStyle:'short',timeStyle:'short'});try{localStorage.setItem(STORE,JSON.stringify({dark,mw,saved,rolls}));setSavedTxt(saved)}catch{}};
+const saveLoc=()=>{const saved=new Date().toLocaleString([],{dateStyle:'short',timeStyle:'short'});try{localStorage.setItem(STORE,JSON.stringify({dark,mw,sCol,sAsc,saved,rolls}));setSavedTxt(saved)}catch{}};
 const pushUndo=()=>{undoStack.push(JSON.stringify(rolls));bUndo.style.display='inline-block'};
 const undoDel=()=>{if(!undoStack.length)return;rolls=JSON.parse(undoStack.pop());bUndo.style.display=undoStack.length?'inline-block':'none';saveLoc();render()};
-const sortBy=c=>{sAsc=sCol===c?-sAsc:1;sCol=c;render()},togF=k=>{flt=flt===k?'all':k;render()},isEol=r=>(r.tags||[]).includes('eol');
+const sortBy=c=>{sAsc=sCol===c?-sAsc:1;sCol=c;saveLoc();render()},togF=k=>{flt=flt===k?'all':k;render()},isEol=r=>(r.tags||[]).some(t=>t.toLowerCase()==='eol');
 function render(){
   const q=srch.value.toLowerCase();
   bSp.classList.toggle('act',flt==='sp');bEm.classList.toggle('act',flt==='emp');bSm.classList.toggle('act',flt==='smp');
   const qM=rolls.filter(r=>`${r.b} ${r.m} ${r.c} ${(r.tags||[]).join(' ')} ${r.smp?'sample':''}`.toLowerCase().includes(q));
-  const sp=qM.filter(r=>!r.smp),sm=qM.filter(r=>r.smp);
-  cSp.textContent=sp.reduce((s,r)=>s+r.st+r.iu,0);
+  const sp=qM.filter(r=>!r.smp&&!isEol(r)),sm=qM.filter(r=>r.smp);
+  //cSp.textContent=sp.reduce((s,r)=>s+(+r.st||0)+(+r.iu||0),0); //Storage and in Use
+  //cSp.textContent=sp.reduce((s,r)=>s+(+r.st||0),0); // Only Storage
+  //cSp.textContent=sp.filter(r=>(+r.st||0)+(+r.iu||0)>0).length; //Material Count
+  cSp.textContent=`📦 ${sp.reduce((s,r)=>s+(+r.st||0),0)} • 🖨️ ${sp.reduce((s,r)=>s+(+r.iu||0),0)}`;
   cEm.textContent=sp.filter(r=>!(r.st+r.iu)&&!isEol(r)).length;
   cSm.textContent=sm.reduce((s,r)=>s+r.st+r.iu,0);
   cKg.textContent=sp.reduce((s,r)=>s+(r.st+r.iu)*r.w,0).toFixed(2)+' kg';
-  let sh=qM.filter(r=>flt==='all'||(flt==='sp'?!r.smp:(flt==='smp'?r.smp:!(r.st+r.iu)&&!isEol(r)&&!r.smp)));
+  let sh=qM.filter(r=>flt==='all'||(flt==='sp'?!r.smp&&!isEol(r):(flt==='smp'?r.smp:!(r.st+r.iu)&&!isEol(r)&&!r.smp)));
   if(sCol)sh.sort((a,b)=>{const g=x=>sCol==='az'?`${x.b} ${x.m} ${x.c}`:(sCol==='q'?x.st+x.iu:(sCol==='t'?(x.st+x.iu)*x.w:x[sCol]));return(typeof g(a)==='number'?g(a)-g(b):String(g(a)).localeCompare(String(g(b))))*sAsc});
   list.innerHTML=sh.map(r=>{
     const cq=r.st+r.iu,op=QTYS.includes(cq)?QTYS:[cq].concat(QTYS).sort((a,b)=>a-b);
@@ -118,9 +122,9 @@ const openEdit=r=>{eId=r.id;dlgT.textContent='Edit Filament';dlgB.textContent='S
 const saveRoll=()=>{if(!col.value.trim())return alert("Enter color");const q=+qty.value,st=stat.value==='st'?q:0,iu=stat.value==='iu'?q:0,smp=isSmp.checked?1:0;if(eId){const r=rolls.find(x=>x.id===eId);Object.assign(r,{b:bSel.value,m:mSel.value,c:col.value.trim(),st,iu,smp,w:+wt.value})}else rolls.push({id:Date.now(),b:bSel.value,m:mSel.value,c:col.value.trim(),st,iu,smp,w:+wt.value,tags:[]});addDlg.close();saveLoc();render()};
 const mv=(id,d)=>{const r=rolls.find(x=>x.id===id);if(d===1&&r.st){r.st--;r.iu++}else if(d===-1&&r.iu){r.iu--;r.st++}saveLoc();render()};
 const setQ=(id,v)=>{const r=rolls.find(x=>x.id===id),n=+v;if(!n)r.st=r.iu=0;else if(n>=r.iu)r.st=n-r.iu;else{r.iu=n;r.st=0}saveLoc();render()};
-const parseData=(txt,isBrowser)=>{const p=JSON.parse(txt);if(!Array.isArray(p)){if(typeof p.dark!=='undefined')setDark(p.dark);if(p.mw)setW(p.mw);if(isBrowser&&p.saved)setSavedTxt(p.saved)}rolls=(Array.isArray(p)?p:(p.rolls||[])).map(r=>({tags:r.tags||(r.eol?['eol']:[]),smp:r.smp?1:0,b:r.b||r.brand,m:r.m||r.mat,c:r.c||r.col,st:r.st??r.storage??0,iu:r.iu??r.inUse??0,w:r.w??r.wt??1,id:r.id||Date.now()+Math.random()}));render()};
+const parseData=(txt,isBrowser)=>{const p=JSON.parse(txt);if(!Array.isArray(p)){if(typeof p.dark!=='undefined')setDark(p.dark);if(p.mw)setW(p.mw);if(typeof p.sCol!=='undefined'){sCol=p.sCol;sAsc=p.sAsc||1}if(isBrowser&&p.saved)setSavedTxt(p.saved)}rolls=(Array.isArray(p)?p:(p.rolls||[])).map(r=>({tags:r.tags||(r.eol?['eol']:[]),smp:r.smp?1:0,b:r.b||r.brand,m:r.m||r.mat,c:r.c||r.col,st:r.st??r.storage??0,iu:r.iu??r.inUse??0,w:r.w??r.wt??1,id:r.id||Date.now()+Math.random()}));render()};
 const clrLoc=()=>{if(confirm('Clear all saved data from browser storage?')){pushUndo();localStorage.removeItem(STORE);rolls=[];setSavedTxt('');render();optDlg.close()}};
-const saveTxt=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify({dark,mw,rolls})],{type:'text/plain'}));a.download='filament.txt';a.click()};
+const saveTxt=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify({dark,mw,sCol,sAsc,rolls})],{type:'text/plain'}));a.download='filament.txt';a.click()};
 const loadTxt=e=>{const f=e.target.files.item(0);if(!f)return;const rd=new FileReader();rd.onload=ev=>{try{parseData(ev.target.result,0);optDlg.close()}catch{alert("Invalid file")}};rd.readAsText(f);e.target.value=''};
 setW('m');setSavedTxt('');try{const s=localStorage.getItem(STORE);if(s)parseData(s,1)}catch{}
 render();
