@@ -1,0 +1,127 @@
+<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Spools.txt</title><style>
+:root{--bg:#f8fafd;--card:#fff;--txt:#1f1f1f;--sub:#666;--brd:#eee;--inp:#ccc;--stat:#f8fafd;--emp:#ffedd5;--eol:#f1f5f9;--eolt:#64748b;--hov:#f1f3f4;--mw:900px}
+body.dark{--bg:#121316;--card:#1e2025;--txt:#e3e2e6;--sub:#9ca3af;--brd:#2d3038;--inp:#3f434d;--stat:#282a30;--emp:#432818;--eol:#252830;--eolt:#9ca3af;--hov:#2d3038}
+*{box-sizing:border-box;font-family:system-ui,sans-serif}
+body{background:var(--bg);color:var(--txt);max-width:var(--mw);margin:0 auto 14px;padding:0 10px;font-size:13px;transition:.15s}
+.sticky{position:sticky;top:0;z-index:5;background:var(--bg);padding:10px 0 2px}
+.card{background:var(--card);border-radius:16px;padding:12px 14px;margin-bottom:9px;box-shadow:0 1px 3px #0002}
+.row{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;text-align:center}
+.stat{background:var(--stat);padding:7px;border-radius:12px;transition:.15s}
+.stat b{display:block;font-size:15px;color:#3b82f6}.stat span{font-size:11px;color:var(--sub)}
+.click{cursor:pointer}.click:hover{filter:brightness(.95)}.act{background:#d3e3fd !important;color:#041e49;outline:2px solid #0b57d0}
+#bEm.act{background:#ffedd5 !important;color:#9a3412;outline-color:#c2410c}#bSm.act{background:#f3e8ff !important;color:#6b21a8;outline-color:#7e22ce}
+input,select{width:100%;padding:6px 8px;border:1px solid var(--inp);border-radius:8px;margin-bottom:6px;background:var(--card);color:var(--txt)}
+button{padding:6px 12px;border-radius:99px;border:none;font-weight:600;cursor:pointer;background:#0b57d0;color:#fff}
+.tonal{background:#d3e3fd;color:#041e49}.danger{background:#fee2e2;color:#b91c1c}
+.wbtn.on{background:#0b57d0;color:#fff}
+dialog{border:none;border-radius:18px;padding:16px;width:290px;background:var(--card);color:var(--txt)}dialog::backdrop{background:#0006}
+table{width:100%;border-collapse:collapse;margin-top:8px}
+th,td{padding:6px;border-bottom:1px solid var(--brd);text-align:left}th{font-size:11px;color:var(--sub);cursor:pointer}
+.empty td{background:var(--emp)}.eol td{background:var(--eol);color:var(--eolt)}
+.tag{font-size:10px;font-weight:700;padding:1px 5px;border-radius:4px;margin-left:4px;display:inline-block}
+.smp{background:#f3e8ff;color:#7e22ce}
+.chip{padding:3px 7px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;user-select:none}
+.dim{opacity:.4}.st{background:#e8f0fe;color:#1967d2}.iu{background:#e6f4ea;color:#137333}
+#ctx{position:fixed;display:none;background:var(--card);color:var(--txt);border:1px solid var(--brd);border-radius:10px;box-shadow:0 4px 12px #0003;padding:4px;z-index:9}
+#ctx div{padding:6px 10px;border-radius:6px;cursor:pointer}#ctx div:hover{background:var(--hov)}
+</style></head><body onclick="ctx.style.display='none'">
+<div class="sticky">
+  <div class="card row">
+    <div>
+      <div style="font-size:16px;font-weight:700">Spools.txt</div>
+      <div style="font-size:12px;color:var(--sub);margin-top:2px">Your tiny local filament vault</div>
+      <div id="lastSv" style="font-size:11px;color:var(--sub);margin-top:3px"></div>
+    </div>
+    <div class="row"><button id="bUndo" class="tonal" style="display:none" onclick="undoDel()">Undo</button><button onclick="openAdd()">Add Filament</button><button class="tonal" onclick="optDlg.showModal()">Options</button></div>
+  </div>
+  <div class="card stats"><div id="bSp" class="stat click" onclick="togF('sp')"><b id="cSp">0</b><span>Spools</span></div><div id="bEm" class="stat click" onclick="togF('emp')"><b id="cEm" style="color:#c2410c">0</b><span>Empty Spools</span></div><div id="bSm" class="stat click" onclick="togF('smp')"><b id="cSm" style="color:#7e22ce">0</b><span>Filament Samples</span></div><div class="stat"><b id="cKg">0.00 kg</b><span>Total Weight</span></div></div>
+</div>
+<dialog id="optDlg" onclick="if(event.target===this)this.close()"><h2>Options</h2>
+<label style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;font-weight:600;padding:4px 0"><span>Dark Mode</span><input type="checkbox" id="darkChk" style="width:auto;margin:0" onchange="setDark(this.checked);saveLoc()"></label>
+<div style="font-weight:600;margin:8px 0 6px;border-top:1px solid var(--brd);padding-top:10px">Max Width</div>
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:8px;">
+  <button id="wS" class="tonal wbtn" onclick="setW('s');saveLoc()">Small</button>
+  <button id="wM" class="tonal wbtn" onclick="setW('m');saveLoc()">Medium</button>
+  <button id="wL" class="tonal wbtn" onclick="setW('l');saveLoc()">Large</button>
+</div>
+<div style="font-weight:600;margin:8px 0 6px;border-top:1px solid var(--brd);padding-top:10px">Import/Export</div>
+<div style="margin:10px 0;">
+  <input type="file" id="fIn" accept=".txt" hidden onchange="loadTxt(event)">
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px">
+    <button class="tonal" onclick="fIn.click()">Import .txt</button>
+    <button class="tonal" onclick="saveTxt()">Export .txt</button>
+  </div>
+  <div style="font-weight:600;margin:8px 0 6px;border-top:1px solid var(--brd);padding-top:10px">Manage LocalStorage</div>
+  
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+    <button class="tonal" onclick="saveLoc()">Save</button>
+    <button class="danger" onclick="clrLoc()">Clear Cache</button>
+  </div><br>
+  <div id="optSv" style="font-size:11px;color:var(--sub);margin-bottom:8px">Auto-save: Not saved yet</div>
+</div>
+<div class="row" style="justify-content:flex-end;margin-top:10px"><button class="tonal" onclick="optDlg.close()">Close</button></div></dialog>
+<dialog id="addDlg" onclick="if(event.target===this)this.close()"><b id="dlgT">Add Filament</b><br><br>
+<select id="bSel"></select><select id="mSel"></select><input id="col" placeholder="Color">
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px"><select id="qty"></select><select id="stat"><option value="st">Storage</option><option value="iu">In Use</option></select></div>
+<label style="display:flex;align-items:center;gap:6px;margin:2px 0 8px;cursor:pointer;font-weight:600"><input type="checkbox" id="isSmp" style="width:auto;margin:0" onchange="wRow.style.display=this.checked?'none':'flex'">Filament Sample</label>
+<div id="wRow" class="row" style="margin:4px 0 10px"><input id="wt" type="range" style="flex:1;margin:0" oninput="wV.textContent=(+this.value).toFixed(2)+' kg'"><b id="wV" style="color:#3b82f6">1.00 kg</b></div>
+<div class="row" style="justify-content:flex-end;margin-top:6px"><button class="tonal" onclick="addDlg.close()">Cancel</button><button id="dlgB" onclick="saveRoll()">+ Add</button></div></dialog>
+<div class="card"><div class="row"><b>Inventory</b><div class="row"><button class="tonal" onclick="sortBy('az')">A–Z</button><input id="srch" placeholder="Search..." oninput="render()" style="width:150px;margin:0;border-radius:99px"></div></div>
+<table><thead><tr><th onclick="sortBy('b')">Brand</th><th onclick="sortBy('m')">Material</th><th onclick="sortBy('c')">Color</th><th onclick="sortBy('q')">Quantity</th><th onclick="sortBy('iu')">Allocation</th><th onclick="sortBy('w')">Unit (kg)</th><th onclick="sortBy('t')">Total (kg)</th></tr></thead><tbody id="list"></tbody></table></div>
+<div id="ctx"><div onclick="ctxAct('edit')">✏️ Edit Row</div><div id="cRet" onclick="ctxAct('ret')">↩️ Return 1 to Storage</div><div id="cEmp" onclick="ctxAct('emp')" style="color:#ef4444">🗑️ Empty 1</div><span id="cTags"></span><div onclick="addCustomTag()">➕ Custom Tag...</div><div onclick="ctxAct('del')" style="color:#ef4444">❌ Delete</div></div>
+<script>
+// === EDIT LISTS & TAGS HERE ===
+const BRANDS = ["Bambu Lab","Prusament","Filament Unger","Redline Filament","eSUN","IEMAI","Polymaker","Overture","Sunlu","Goedis","Kaisertech"];
+const MATS = ["PLA","PLA+","PLA Pure","PETG","ABS","ABS+","ASA","ASA CF","TPU","PA","PC"];
+const MAX_Q = 10, DEF_Q = 1, SLIDER = {min:.05, max:5, step:.05, def:1};
+const WIDTHS = {s:'920px', m:'1200px', l:'1450px'};
+const TAGS = [
+  {id:'special', name:'SPECIAL', bg:'#fef3c7', fg:'#b45309'},
+  {id:'eol', name:'EOL', bg:'#fee2e2', fg:'#b91c1c'}
+];
+// ==============================
+const QTYS=Array.from({length:MAX_Q+1},(_,i)=>i),STORE='filament_inv_v1';let rolls=[],undoStack=[],sCol='',sAsc=1,cId=0,eId=0,flt='all',dark=0,mw='m';
+bSel.innerHTML=BRANDS.map(x=>`<option>${x}</option>`).join('');mSel.innerHTML=MATS.map(x=>`<option>${x}</option>`).join('');
+qty.innerHTML=QTYS.map(x=>`<option value="${x}" ${x===DEF_Q?'selected':''}>${x} pcs</option>`).join('');
+Object.assign(wt,{min:SLIDER.min,max:SLIDER.max,step:SLIDER.step,value:SLIDER.def});wV.textContent=SLIDER.def.toFixed(2)+' kg';
+const setDark=v=>{dark=v?1:0;darkChk.checked=!!dark;document.body.classList.toggle('dark',!!dark)};
+const setW=k=>{mw=WIDTHS[k]?k:'m';document.documentElement.style.setProperty('--mw',WIDTHS[mw]);['s','m','l'].forEach(x=>document.getElementById('w'+x.toUpperCase()).classList.toggle('on',x===mw))};
+const setSavedTxt=ts=>{const t=ts?`Browser saved: ${ts}`:'Browser storage: Not saved yet';lastSv.textContent=t;optSv.textContent=t};
+const saveLoc=()=>{const saved=new Date().toLocaleString([],{dateStyle:'short',timeStyle:'short'});try{localStorage.setItem(STORE,JSON.stringify({dark,mw,saved,rolls}));setSavedTxt(saved)}catch{}};
+const pushUndo=()=>{undoStack.push(JSON.stringify(rolls));bUndo.style.display='inline-block'};
+const undoDel=()=>{if(!undoStack.length)return;rolls=JSON.parse(undoStack.pop());bUndo.style.display=undoStack.length?'inline-block':'none';saveLoc();render()};
+const sortBy=c=>{sAsc=sCol===c?-sAsc:1;sCol=c;render()},togF=k=>{flt=flt===k?'all':k;render()},isEol=r=>(r.tags||[]).includes('eol');
+function render(){
+  const q=srch.value.toLowerCase();
+  bSp.classList.toggle('act',flt==='sp');bEm.classList.toggle('act',flt==='emp');bSm.classList.toggle('act',flt==='smp');
+  const qM=rolls.filter(r=>`${r.b} ${r.m} ${r.c} ${(r.tags||[]).join(' ')} ${r.smp?'sample':''}`.toLowerCase().includes(q));
+  const sp=qM.filter(r=>!r.smp),sm=qM.filter(r=>r.smp);
+  cSp.textContent=sp.reduce((s,r)=>s+r.st+r.iu,0);
+  cEm.textContent=sp.filter(r=>!(r.st+r.iu)&&!isEol(r)).length;
+  cSm.textContent=sm.reduce((s,r)=>s+r.st+r.iu,0);
+  cKg.textContent=sp.reduce((s,r)=>s+(r.st+r.iu)*r.w,0).toFixed(2)+' kg';
+  let sh=qM.filter(r=>flt==='all'||(flt==='sp'?!r.smp:(flt==='smp'?r.smp:!(r.st+r.iu)&&!isEol(r)&&!r.smp)));
+  if(sCol)sh.sort((a,b)=>{const g=x=>sCol==='az'?`${x.b} ${x.m} ${x.c}`:(sCol==='q'?x.st+x.iu:(sCol==='t'?(x.st+x.iu)*x.w:x[sCol]));return(typeof g(a)==='number'?g(a)-g(b):String(g(a)).localeCompare(String(g(b))))*sAsc});
+  list.innerHTML=sh.map(r=>{
+    const cq=r.st+r.iu,op=QTYS.includes(cq)?QTYS:[cq].concat(QTYS).sort((a,b)=>a-b);
+    const tHtml=(r.tags||[]).map(tid=>{const t=TAGS.find(x=>x.id===tid)||{name:tid.toUpperCase(),bg:'#e0f2fe',fg:'#0369a1'};return`<span class="tag" style="background:${t.bg};color:${t.fg}">${t.name}</span>`}).join('');
+    return`<tr class="${isEol(r)?'eol':(!cq?'empty':'')}" oncontextmenu="oCtx(event,${r.id})"><td><b>${r.b}</b>${r.smp?'<span class="tag smp">SAMPLE</span>':''}${tHtml}</td><td>${r.m}</td><td>${r.c}</td><td><select style="width:auto;margin:0;padding:2px" onchange="setQ(${r.id},this.value)">${op.map(n=>`<option value="${n}" ${n===cq?'selected':''}>${n}</option>`).join('')}</select></td><td><span class="chip st ${!r.st?'dim':''}" title="In Storage (Click to move 1 to In Use)" onclick="mv(${r.id},1)">📦 ${r.st}</span> <span class="chip iu ${!r.iu?'dim':''}" title="In Use (Click to return 1 to Storage)" onclick="mv(${r.id},-1)">🖨️ ${r.iu}</span></td><td>${r.smp?'-':(+r.w).toFixed(2)}</td><td><b>${r.smp?'-':(cq*r.w).toFixed(2)}</b></td></tr>`;
+  }).join('');
+}
+const oCtx=(e,id)=>{e.preventDefault();const r=rolls.find(x=>x.id===id);if(!r)return;cId=id;cRet.style.display=cEmp.style.display=r.iu?'block':'none';const extra=(r.tags||[]).filter(tid=>!TAGS.some(t=>t.id===tid)).map(tid=>({id:tid,name:tid.toUpperCase()}));cTags.innerHTML=TAGS.concat(extra).map(t=>`<div onclick="togT('${t.id.replace(/'/g,"\\'")}')">${(r.tags||[]).includes(t.id)?'✅':'🏷️'} Toggle ${t.name}</div>`).join('');ctx.style.display='block';const x=Math.min(e.clientX,innerWidth-ctx.offsetWidth-6),y=Math.min(e.clientY,innerHeight-ctx.offsetHeight-6);Object.assign(ctx.style,{left:Math.max(6,x)+'px',top:Math.max(6,y)+'px'})};
+const togT=tid=>{const r=rolls.find(x=>x.id===cId);if(!r)return;r.tags=r.tags||[];r.tags=r.tags.includes(tid)?r.tags.filter(x=>x!==tid):r.tags.concat(tid);saveLoc();render()};
+const addCustomTag=()=>{const name=prompt('Enter custom tag name:');if(!name||!name.trim())return;const tid=name.trim().toUpperCase();const r=rolls.find(x=>x.id===cId);if(r){r.tags=r.tags||[];if(!r.tags.includes(tid))r.tags.push(tid);saveLoc();render()}};
+const ctxAct=a=>{const r=rolls.find(x=>x.id===cId);if(!r)return;if(a==='edit')openEdit(r);else if(a==='del'){if(confirm(`Delete ${r.b} ${r.m} ${r.c}?`)){pushUndo();rolls=rolls.filter(x=>x.id!==cId);saveLoc();render()}}else if(r.iu){r.iu--;if(a==='ret')r.st++;saveLoc();render()}};
+const openAdd=()=>{eId=0;dlgT.textContent='';dlgB.textContent='Add';col.value='';qty.value=DEF_Q;stat.value='st';isSmp.checked=false;wRow.style.display='flex';wt.value=SLIDER.def;wV.textContent=SLIDER.def.toFixed(2)+' kg';addDlg.showModal()};
+const openEdit=r=>{eId=r.id;dlgT.textContent='Edit Filament';dlgB.textContent='Save';bSel.value=r.b;mSel.value=r.m;col.value=r.c;qty.value=r.st+r.iu;stat.value=r.iu?'iu':'st';isSmp.checked=!!r.smp;wRow.style.display=r.smp?'none':'flex';wt.value=r.w;wV.textContent=(+r.w).toFixed(2)+' kg';addDlg.showModal()};
+const saveRoll=()=>{if(!col.value.trim())return alert("Enter color");const q=+qty.value,st=stat.value==='st'?q:0,iu=stat.value==='iu'?q:0,smp=isSmp.checked?1:0;if(eId){const r=rolls.find(x=>x.id===eId);Object.assign(r,{b:bSel.value,m:mSel.value,c:col.value.trim(),st,iu,smp,w:+wt.value})}else rolls.push({id:Date.now(),b:bSel.value,m:mSel.value,c:col.value.trim(),st,iu,smp,w:+wt.value,tags:[]});addDlg.close();saveLoc();render()};
+const mv=(id,d)=>{const r=rolls.find(x=>x.id===id);if(d===1&&r.st){r.st--;r.iu++}else if(d===-1&&r.iu){r.iu--;r.st++}saveLoc();render()};
+const setQ=(id,v)=>{const r=rolls.find(x=>x.id===id),n=+v;if(!n)r.st=r.iu=0;else if(n>=r.iu)r.st=n-r.iu;else{r.iu=n;r.st=0}saveLoc();render()};
+const parseData=(txt,isBrowser)=>{const p=JSON.parse(txt);if(!Array.isArray(p)){if(typeof p.dark!=='undefined')setDark(p.dark);if(p.mw)setW(p.mw);if(isBrowser&&p.saved)setSavedTxt(p.saved)}rolls=(Array.isArray(p)?p:(p.rolls||[])).map(r=>({tags:r.tags||(r.eol?['eol']:[]),smp:r.smp?1:0,b:r.b||r.brand,m:r.m||r.mat,c:r.c||r.col,st:r.st??r.storage??0,iu:r.iu??r.inUse??0,w:r.w??r.wt??1,id:r.id||Date.now()+Math.random()}));render()};
+const clrLoc=()=>{if(confirm('Clear all saved data from browser storage?')){pushUndo();localStorage.removeItem(STORE);rolls=[];setSavedTxt('');render();optDlg.close()}};
+const saveTxt=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify({dark,mw,rolls})],{type:'text/plain'}));a.download='filament.txt';a.click()};
+const loadTxt=e=>{const f=e.target.files.item(0);if(!f)return;const rd=new FileReader();rd.onload=ev=>{try{parseData(ev.target.result,0);optDlg.close()}catch{alert("Invalid file")}};rd.readAsText(f);e.target.value=''};
+setW('m');setSavedTxt('');try{const s=localStorage.getItem(STORE);if(s)parseData(s,1)}catch{}
+render();
+</script></body></html>
