@@ -1,5 +1,6 @@
 # spools.txt
-<img width="1068" height="291" alt="image" src="https://github.com/user-attachments/assets/f56bbf08-3196-47c2-8890-e8b2ed05efa6" /><br>
+<img width="1190" height="281" alt="image" src="https://github.com/user-attachments/assets/e72cbb8f-0eb6-487a-951e-fc0d01824973" />
+<br>
 <br>
 Your tiny local filament vault in your browser.<br>
 Track your filament storage locally, no cloud, no external servers. Only your web browser.
